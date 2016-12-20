@@ -1,0 +1,45 @@
+heat_template_version: 2014-10-16
+
+resources:
+  userdata:
+    type: OS::Heat::MultipartMime
+    properties:
+      parts:
+      - config: {get_resource: clean_disk}
+
+  clean_disk:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config: |
+        #!/bin/bash
+        {
+        for disk in sdb sdc sdd sde sdf sdg sdh sdi sdj sdk sdl sdm
+        do
+        #Add code to only do this one ceph nodes?  only the ceph nodes have sdb - sdp
+           echo "Looking at $disk"
+           #if [ -b /dev/$disk ]
+           #then
+             echo "Working on disk:$disk"
+             sgdisk -og /dev/$disk
+           #fi
+        done
+        
+        #add code to make journal partitions?
+        for disk in sdn sdl sdm
+        do
+           echo "Looking at $disk"
+           if [ -b /dev/$disk ]
+           then
+             for part in `seq 1 4`
+             do
+               echo "Working on disk:$disk part:$part"
+               sgdisk -n $part:0:+5G /dev/$disk
+             done
+           fi
+        done
+        
+        } 2>&1 | tee /root/wipe-disk.txt
+
+outputs:
+  OS::stack_id:
+    value: {get_resource: userdata}
