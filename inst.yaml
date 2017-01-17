@@ -1,0 +1,140 @@
+heat_template_version: 2015-04-30 
+description: Template that installs a server with a RHN subscription
+
+ 
+parameters:
+  image:
+    type: string
+    label: Image name or ID
+    description: Image to be used for server.
+    default: rhel7
+  flavor:
+    type: string
+    label: Flavor
+    description: Type of instance (flavor) to be used on the compute instance.
+    default: m1.small
+  key:
+    type: string
+    label: Key name
+    description: Name of key-pair to be installed on the compute instance.
+    default: hpekey 
+  private_network:
+    type: string
+    label: Private network name or ID
+    description: Network to attach server to.
+    default: net1 
+  rhn_user:
+    type: string
+    label: rhn username
+    description: Name of the rhn user.
+  rhn_password:
+    type: string 
+    label: RHN user password
+    description: rhn user password
+    hidden: true
+  rhn_hostname:
+    type: string
+    label: instance hostname
+    description: FQDN host name for instance
+  rhn_pool:
+    type: string
+    label: rhn pool ID
+    description: rhn pool ID
+resources:
+   floating_ip:
+    type: OS::Nova::FloatingIP
+    properties:
+      pool: nova
+   association:
+    type: OS::Nova::FloatingIPAssociation
+    properties:
+      floating_ip: { get_resource: floating_ip }
+      server_id: { get_resource: rhn_instance }
+   rhn_instance:
+    type: OS::Nova::Server
+    properties:
+     image: { get_param: image }
+     flavor: { get_param: flavor }
+     key_name: { get_param: key }
+     networks:
+          - network: { get_param: private_network }
+     user_data_format: RAW
+     user_data:
+       str_replace:
+         params:
+          __rhn_username__: { get_param: rhn_user }
+          __rhn_password__: { get_param: rhn_password }
+          __rhn_hostname__: { get_param: rhn_hostname }
+          __rhn_pool__: { get_param: rhn_pool }
+              
+         template: |
+           #!/bin/bash -ex
+       
+            subscription-manager register --username __rhn_username__ --password __rhn_password__
+            subscription-manager attach --pool=__rhn_pool__
+            subscription-manager repos --disable=*
+            subscription-manager repos --enable=rhel-7-server-rpms --enable=rhel-7-server-extras-rpms --enable=rhel-7-server-rh-common-rpms
+            echo '[sensu]
+           name=sensu
+           baseurl=http://repositories.sensuapp.org/yum/$basearch/
+           gpgcheck=0
+           enabled=1' | tee /etc/yum.repos.d/sensu.repo
+            yum update -y
+            yum install sensu -y            
+            rpm -Uvh http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm 
+            yum install epel-release -y
+            yum install wget -y
+            wget http://packages.erlang-solutions.com/erlang-solutions-1.0-1.noarch.rpm 
+            rpm -Uvh erlang-solutions-1.0-1.noarch.rpm 
+            yum install -y erlang
+            yum install -y socat
+            rpm -Uvh http://www.rabbitmq.com/releases/rabbitmq-server/v3.6.3/rabbitmq-server-3.6.3-1.noarch.rpm
+            chkconfig rabbitmq-server on
+            service rabbitmq-server start
+            rabbitmqctl add_vhost /sensu
+            rabbitmqctl add_user sensu secret
+            rabbitmqctl set_permissions -p /sensu sensu ".*" ".*" ".*"           
+            yum install ansible -y
+            yum install git -y
+            hostnamectl set-hostname __rhn_hostname__
+            echo '{
+              "client": {
+                "name": "vm1",
+                "address": "127.0.0.1",
+                "subscriptions": [
+                  "test"
+                ]
+              }
+            }' | tee /etc/sensu/conf.d/client.json
+            echo '{
+             "rabbitmq": {
+               "port": 5672,
+               "host": "10.19.20.200",
+               "user": "sensu",
+               "password": "sensu",
+               "vhost": "/sensu",
+               "reconnect_on_error": false,
+               "prefetch": 1
+             }
+           }' | tee /etc/sensu/conf.d/rabbitmq.json
+             echo  '{
+             "transport": {
+               "name": "rabbitmq",
+               "reconnect_on_error": true
+             }
+           }' | tee /etc/sensu/conf.d/transport.json
+             systemctl start sensu-client
+#            git clone https://github.com/kj1bell/ansible_scripts.git 
+#            ansible-playbook -i "localhost," -c local ./ansible_scripts/idm.yaml           
+
+
+
+outputs:
+  instance_ip:
+    description: IP address of the deployed compute instance
+    value: { get_attr: [rhn_instance, first_address] }
+# notify heat that we are done here
+
+
+#
+# openstack stack create rhninst -f inst.yaml -P "rhn_user=<your-rhn-user>;rhn_password=<your-rhn-password>;rhn_pool=<rhn-subscription-pool-id>;rhn_hostname=<FQDN for instance>"

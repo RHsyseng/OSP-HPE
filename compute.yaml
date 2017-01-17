@@ -34,7 +34,7 @@ parameters:
     description: IP address/subnet on the management network
     type: string
   BondInterfaceOvsOptions:
-    default: 'mode=802.3ad'
+    default: ''
     description: The ovs_options string for the bond interface. Set things like
                  lacp=active and/or bond_mode=balance-slb using this option.
     type: string
@@ -97,12 +97,12 @@ resources:
                   default: true
                   next_hop: {get_param: ControlPlaneDefaultRoute}
             -
-              type: linux_bridge
-              name: br_cloud
+              type: ovs_bridge
+              name: {get_input: bridge_name}
               dns_servers: {get_param: DnsServers}
               members:
                 -
-                  type: linux_bond
+                  type: ovs_bond
                   name: bond0
                   bonding_options: {get_param: BondInterfaceOvsOptions}
                   members:
@@ -113,13 +113,27 @@ resources:
                     -
                       type: interface
                       name: eno50
+                -
+                  type: vlan
+                  device: bond0
+                  vlan_id: {get_param: InternalApiNetworkVlanID}
+                  addresses:
+                    -
+                     ip_netmask: {get_param: InternalApiIpSubnet}
+                -
+                  type: vlan
+                  device: bond0 
+                  vlan_id: {get_param: TenantNetworkVlanID}
+                  addresses:
+                    -
+                     ip_netmask: {get_param: TenantIpSubnet}
             -
-              type: linux_bridge
+              type: ovs_bridge
               name: br_storage
               dns_servers: {get_param: DnsServers}
               members:
                 -
-                  type: linux_bond
+                  type: ovs_bond
                   name: bond1
                   bonding_options: {get_param: BondInterfaceOvsOptions}
                   members:
@@ -130,27 +144,13 @@ resources:
                     -
                       type: interface
                       name: ens2f1
-            -
-              type: vlan
-              device: br_storage
-              vlan_id: {get_param: InternalApiNetworkVlanID}
-              addresses:
-                -
-                  ip_netmask: {get_param: InternalApiIpSubnet}
-            -
-              type: vlan
-              device: br_cloud
-              vlan_id: {get_param: TenantNetworkVlanID}
-              addresses:
-                -
-                  ip_netmask: {get_param: TenantIpSubnet}
-            -   
-              type: vlan
-              device: br_storage
-              vlan_id: {get_param: StorageNetworkVlanID}
-              addresses:
-                 -
-                   ip_netmask: {get_param: StorageIpSubnet}
+                -   
+                  type: vlan
+                  device: bond1
+                  vlan_id: {get_param: StorageNetworkVlanID}
+                  addresses:
+                    -
+                     ip_netmask: {get_param: StorageIpSubnet}
             -
               type: interface
               name: eno2
@@ -166,7 +166,6 @@ resources:
               name: eno4
               use_dhcp: false
               defroute: false
-
 outputs:
   OS::stack_id:
     description: The OsNetConfigImpl resource.

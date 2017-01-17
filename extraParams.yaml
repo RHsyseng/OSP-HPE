@@ -5,8 +5,8 @@ resource_registry:
    OS::TripleO::NodeUserData: /home/stack/templates/mytemplates/firstboot/wipe-disks.yaml
 parameter_defaults:
   ControlPlaneSubnetCidr: "24"
-  ControlPlaneDefaultRoute: 192.168.20.31
-  EC2MetadataIp: 192.168.20.31
+  ControlPlaneDefaultRoute: 192.168.20.1
+  EC2MetadataIp: 192.168.20.30
   DnsServers: ['10.11.5.19','8.8.8.8']
   # Customize all these values to match the local environment
   InternalApiNetCidr: 172.16.10.0/24
@@ -28,13 +28,11 @@ parameter_defaults:
   # Set to the router gateway on the external network
   ExternalInterfaceDefaultRoute: 10.19.20.254
   # Customize bonding options if required (will be ignored if bonds are not used)
-  BondInterfaceOvsOptions: 'mode=802.3ad'
+  BondInterfaceOvsOptions: 'balance-slb lacp=off'
   NeutronExternalNetworkBridge: "''"
-  NeutronBridgeMappings: 'datacentre:br-ex,tenant:br-tenant'
-  NeutronNetworkType: 'vlan'
-  NeutronNetworkVlanRanges: 'tenant:3044:3054'
-  #NeutronDisableTunneling: 
-  NeutronTunnelType: ''
+  NeutronBridgeMappings: "datacentre:br-ex"
+  NeutronNetworkVLANRanges: 'datacentre:1:1000'
+  NeutronTunnelTypes: 'vxlan'
   TimeZone: 'US/Eastern'
   #Monitoring Parameters
   MonitoringRabbitHost: 192.168.20.201
@@ -49,6 +47,7 @@ parameter_defaults:
     - host: 192.168.20.202
       port: 24224
   ExtraConfig:
+    ceph::profile::params::osd_journal_size: 2048
     ceph::profile::params::osds:
         '/dev/sdb':
           journal: '/dev/sdl1'
