@@ -1,0 +1,17 @@
+---
+- hosts: all
+  tasks:
+     - name: replace ip
+       replace: 
+         dest: /etc/sensu/conf.d/client.json
+         regexp: "127.0.0.1"
+         replace: "{{ ansible_eth0.ipv4.address }}"
+         backup: no
+     - name: replace hostname
+       replace:
+         dest: /etc/sensu/conf.d/client.json
+         regexp: "localhost"
+         replace: "{{ ansible_fqdn }}"
+         backup: no
+     - name: start Sensu Client
+       shell: systemctl start sensu-client
