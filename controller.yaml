@@ -118,7 +118,7 @@ resources:
                    primary: true
                   -
                    type: interface
-                   name: eno50
+                   name: ens2f0
                    mtu: 9000
                - 
                 type: vlan
@@ -165,7 +165,7 @@ resources:
                 members:
                   -
                    type: interface
-                   name: ens2f0
+                   name: eno50
                    primary: true
                    mtu: 9000
                   -
