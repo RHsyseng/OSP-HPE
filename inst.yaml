@@ -135,6 +135,5 @@ outputs:
 # notify heat that we are done here
 
 
-#openstack stack create rhninst -f inst.yaml -P "rhn_user=ken1bell ;rhn_password=Liberty2004;rhn_pool=8a85f9874011071c01407da00b997cb2;rhn_hostname=myinstance"
-#
-# openstack stack create rhninst -f inst.yaml -P "rhn_user=<your-rhn-user>;rhn_password=<your-rhn-password>;rhn_pool=<rhn-subscription-pool-id>;rhn_hostname=<FQDN for instance>"
+
+# openstack stack create -t /templates/mytemplates/inst.yaml --parameter "rhn_user=<your-rhn-user>;rhn_password=<your-rhn-password>;rhn_pool=<rhn-subscription-pool-id>;rhn_hostname=<FQDN for instance>" rhninst
