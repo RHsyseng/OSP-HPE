@@ -119,6 +119,33 @@ resources:
                   next_hop: {get_param: ControlPlaneDefaultRoute}
             -
               type: ovs_bridge
+              name: br_storage_mgmt
+              dns_servers: {get_param: DnsServers}
+              members:
+                -
+                 type: ovs_bond
+                 name: bond0
+                 bonding_options: {get_param: BondInterfaceOvsOptions}
+                 members:
+                   -
+                    type: interface
+                    name: eno49
+                    primary: true
+                    mtu: 9000
+                   -
+                    type: interface
+                    name: eno50
+                    mtu: 9000
+                - 
+                 type: vlan
+                 device: bond0
+                 mtu: 9000
+                 vlan_id: {get_param: StorageMgmtNetworkVlanID}
+                 addresses:
+                   -
+                     ip_netmask: {get_param: StorageMgmtIpSubnet}
+            -
+              type: ovs_bridge
               name: br_storage
               dns_servers: {get_param: DnsServers}
               members:
@@ -131,19 +158,15 @@ resources:
                     type: interface
                     name: ens1f0
                     primary: true
+                    mtu: 9000
                    -
                     type: interface
                     name: ens1f1
-                - 
-                 type: vlan
-                 device: bond1
-                 vlan_id: {get_param: StorageMgmtNetworkVlanID}
-                 addresses:
-                   -
-                     ip_netmask: {get_param: StorageMgmtIpSubnet}
+                    mtu: 9000
                 -
                  type: vlan
                  device: bond1
+                 mtu: 9000
                  vlan_id: {get_param: StorageNetworkVlanID}
                  addresses:
                    -
@@ -161,16 +184,6 @@ resources:
             -
               type: interface
               name: eno4
-              use_dhcp: false
-              defroute: false
-            -
-              type: interface
-              name: eno49
-              use_dhcp: false
-              defroute: false
-            -
-              type: interface
-              name: eno50
               use_dhcp: false
               defroute: false
 outputs:

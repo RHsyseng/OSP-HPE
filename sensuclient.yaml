@@ -1,0 +1,7 @@
+---
+- hosts: all
+  tasks:
+    - name: echo local hosts
+      shell: echo "{{ ansible_eth0.ipv4.address }} " " $HOSTNAME" >>/etc/hosts 
+    - name: install idm 
+      shell: ipa-server-install -a secret12 --hostname= $HOSTNAME -r cloud.com -p secret12 -n cloud.com -U

@@ -17,7 +17,7 @@ parameters:
     type: string
     label: Key name
     description: Name of key-pair to be installed on the compute instance.
-    default: hpekey 
+    default: hpeuserkp
   private_network:
     type: string
     label: Private network name or ID
@@ -99,7 +99,7 @@ resources:
             hostnamectl set-hostname __rhn_hostname__
             echo '{
               "client": {
-                "name": "vm1",
+                "name": "localhost",
                 "address": "127.0.0.1",
                 "subscriptions": [
                   "test"
@@ -123,9 +123,8 @@ resources:
                "reconnect_on_error": true
              }
            }' | tee /etc/sensu/conf.d/transport.json
-             systemctl start sensu-client
-#            git clone https://github.com/kj1bell/ansible_scripts.git 
-#            ansible-playbook -i "localhost," -c local ./ansible_scripts/idm.yaml           
+            git clone https://github.com/kj1bell/ansible_scripts.git 
+            ansible-playbook -i "localhost," -c local ./ansible_scripts/sensu.yaml           
 
 
 
@@ -136,5 +135,6 @@ outputs:
 # notify heat that we are done here
 
 
+#openstack stack create rhninst -f inst.yaml -P "rhn_user=ken1bell ;rhn_password=Liberty2004;rhn_pool=8a85f9874011071c01407da00b997cb2;rhn_hostname=myinstance"
 #
 # openstack stack create rhninst -f inst.yaml -P "rhn_user=<your-rhn-user>;rhn_password=<your-rhn-password>;rhn_pool=<rhn-subscription-pool-id>;rhn_hostname=<FQDN for instance>"
