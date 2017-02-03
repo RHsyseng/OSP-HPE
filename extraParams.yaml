@@ -23,7 +23,7 @@ parameter_defaults:
   InternalApiNetworkVlanID: 3041
   StorageNetworkVlanID: 3042
   StorageMgmtNetworkVlanID: 3043
-  TenantNetworkVlanID: 3045
+  TenantNetworkVlanID: 3044
   ExternalNetworkVlanID: 104
   # Set to the router gateway on the external network
   ExternalInterfaceDefaultRoute: 10.19.20.254
