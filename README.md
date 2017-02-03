@@ -1,2 +1,2 @@
 # OSP-HPE
-This repository is for the OSP reference architecture on HPE Proliant Servers
+This repository is for the RHOSP 10 reference architecture on HPE Proliant Servers
